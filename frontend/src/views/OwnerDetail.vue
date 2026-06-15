@@ -75,8 +75,7 @@
             <div class="timeline-header">
               <strong>{{ formatDate(item.sent_at) }}</strong>
               <span class="channel-tag">{{ channelLabels[item.channel] || item.channel }}</span>
-              <StatusBadge v-if="item.bill_status === 'paid'" :status="item.bill_status" />
-              <StatusBadge v-else :status="item.bill_status" />
+              <StatusBadge :status="item.bill_status" />
             </div>
             <p class="timeline-message">{{ item.message }}</p>
             <div class="timeline-bill-info">

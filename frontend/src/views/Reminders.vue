@@ -90,6 +90,14 @@ import { propertyApi } from "../api/property";
 import DataTable from "../components/DataTable.vue";
 import StatusBadge from "../components/StatusBadge.vue";
 
+const CONTACT_RESULT_LABELS = {
+  reached_promise: "已接听-承诺缴费",
+  reached_refuse: "已接听-拒绝缴费",
+  unreached: "未接听",
+  empty_number: "空号",
+  other: "其他"
+};
+
 const router = useRouter();
 
 const bills = ref([]);
@@ -174,9 +182,43 @@ async function submitContact() {
   } else {
     payload.clear_next_follow_up = true;
   }
-  await propertyApi.recordContact(contactForm.id, payload);
+  const updated = await propertyApi.recordContact(contactForm.id, payload);
+
+  const rIdx = reminders.value.findIndex(r => r.id === updated.id);
+  if (rIdx !== -1) {
+    reminders.value.splice(rIdx, 1, { ...reminders.value[rIdx], ...updated });
+  }
+
+  const billId = updated.bill;
+  const billIdx = bills.value.findIndex(b => b.id === billId);
+  if (billIdx !== -1) {
+    const bill = bills.value[billIdx];
+    let latestContact = null;
+    let latestContactDisplay = null;
+    let latestFollow = null;
+    const billReminders = reminders.value
+      .filter(r => r.bill === billId)
+      .slice()
+      .sort((a, b) => new Date(b.sent_at) - new Date(a.sent_at));
+    for (const r of billReminders) {
+      if (r.contact_result && !latestContact) {
+        latestContact = r.contact_result;
+        latestContactDisplay = r.contact_result_display || CONTACT_RESULT_LABELS[r.contact_result];
+      }
+      if (r.next_follow_up && !latestFollow) {
+        latestFollow = r.next_follow_up;
+      }
+      if (latestContact && latestFollow) break;
+    }
+    bills.value.splice(billIdx, 1, {
+      ...bill,
+      latest_contact_result: latestContact,
+      latest_contact_result_display: latestContactDisplay,
+      latest_next_follow_up: latestFollow
+    });
+  }
+
   showContactModal.value = false;
-  await load();
 }
 
 onMounted(load);
