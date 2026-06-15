@@ -536,3 +536,139 @@ th {
   color: #146c94;
   font-size: 12px;
 }
+
+.owner-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.info-card {
+  background: #f6f8fa;
+  border: 1px solid #e6edf2;
+  border-radius: 8px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.info-card .label {
+  color: #687684;
+  font-size: 13px;
+}
+
+.info-card strong {
+  font-size: 15px;
+  color: #1f2933;
+}
+
+.bill-status-legend {
+  display: flex;
+  gap: 18px;
+  padding: 8px 0 12px;
+  font-size: 13px;
+  color: #52606d;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.legend-dot.unpaid {
+  background: #e74c3c;
+}
+
+.legend-dot.paid {
+  background: #28a17d;
+}
+
+.timeline-item.paid .timeline-dot {
+  background: #28a17d;
+  box-shadow: 0 0 0 2px #c8e6dc;
+}
+
+.timeline-item.unpaid .timeline-dot,
+.timeline-item.overdue .timeline-dot {
+  background: #e74c3c;
+  box-shadow: 0 0 0 2px #f5c6c2;
+}
+
+.timeline-item.cancelled .timeline-dot {
+  background: #9aa8b3;
+  box-shadow: 0 0 0 2px #dce3ea;
+}
+
+.timeline-item.paid .timeline-body {
+  background: #f0faf5;
+  border-left: 3px solid #28a17d;
+}
+
+.timeline-item.unpaid .timeline-body,
+.timeline-item.overdue .timeline-body {
+  background: #fdf4f3;
+  border-left: 3px solid #e74c3c;
+}
+
+.timeline-item.cancelled .timeline-body {
+  background: #f6f8fa;
+  border-left: 3px solid #9aa8b3;
+}
+
+.timeline-actions {
+  margin-top: 8px;
+  display: flex;
+  gap: 8px;
+}
+
+.timeline-actions button {
+  min-height: 28px;
+  padding: 0 10px;
+  font-size: 13px;
+}
+
+.timeline-bill-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: #687684;
+  margin-top: 4px;
+}
+
+.bill-tag {
+  display: inline-block;
+  background: #e8eef3;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-family: "Courier New", monospace;
+}
+
+.timeline-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.timeline-message {
+  margin: 0 0 6px;
+  color: #52606d;
+  line-height: 1.5;
+}
+
+@media (max-width: 920px) {
+  .owner-info-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}

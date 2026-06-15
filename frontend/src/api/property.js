@@ -4,7 +4,9 @@ export const propertyApi = {
   dashboard: () => http.get("/dashboard/").then(unwrap),
   listBuildings: () => http.get("/buildings/").then(unwrap),
   createBuilding: (payload) => http.post("/buildings/", payload).then(unwrap),
+  getBuilding: (id) => http.get(`/buildings/${id}/`).then(unwrap),
   listRooms: () => http.get("/rooms/").then(unwrap),
+  getRoom: (id) => http.get(`/rooms/${id}/`).then(unwrap),
   createRoom: (payload) => http.post("/rooms/", payload).then(unwrap),
   listFeeTypes: () => http.get("/fee-types/").then(unwrap),
   createFeeType: (payload) => http.post("/fee-types/", payload).then(unwrap),
@@ -15,5 +17,6 @@ export const propertyApi = {
   listReminders: (params = {}) => http.get("/reminders/", { params }).then(unwrap),
   createOverdueReminders: (payload) => http.post("/reminders/create_overdue/", payload).then(unwrap),
   recordContact: (id, payload) => http.patch(`/reminders/${id}/record_contact/`, payload).then(unwrap),
-  roomReminderTimeline: (roomId) => http.get(`/rooms/${roomId}/reminder_timeline/`).then(unwrap)
+  roomReminderTimeline: (roomId) => http.get(`/rooms/${roomId}/reminder_timeline/`).then(unwrap),
+  roomBills: (roomId) => http.get("/bills/", { params: { room: roomId } }).then(unwrap)
 };

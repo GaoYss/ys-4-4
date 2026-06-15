@@ -62,10 +62,13 @@ class BillViewSet(viewsets.ModelViewSet):
         queryset = super().get_queryset()
         status_filter = self.request.query_params.get("status")
         period = self.request.query_params.get("period")
+        room_filter = self.request.query_params.get("room")
         if status_filter:
             queryset = queryset.filter(status=status_filter)
         if period:
             queryset = queryset.filter(period=period)
+        if room_filter:
+            queryset = queryset.filter(room_id=room_filter)
         return queryset
 
     @action(detail=False, methods=["post"])

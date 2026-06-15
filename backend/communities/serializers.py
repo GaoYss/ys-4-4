@@ -97,6 +97,7 @@ class PaymentSerializer(serializers.ModelSerializer):
 class ReminderSerializer(serializers.ModelSerializer):
     bill_no = serializers.CharField(source="bill.bill_no", read_only=True)
     bill_status = serializers.CharField(source="bill.status", read_only=True)
+    room = serializers.IntegerField(source="bill.room_id", read_only=True)
     room_label = serializers.SerializerMethodField()
     owner_name = serializers.CharField(source="bill.room.owner_name", read_only=True)
     phone = serializers.CharField(source="bill.room.phone", read_only=True)
@@ -112,6 +113,7 @@ class ReminderSerializer(serializers.ModelSerializer):
             "bill",
             "bill_no",
             "bill_status",
+            "room",
             "room_label",
             "owner_name",
             "phone",
@@ -125,7 +127,7 @@ class ReminderSerializer(serializers.ModelSerializer):
             "contact_result_display",
             "next_follow_up",
         ]
-        read_only_fields = ["reminder_no", "sent_at"]
+        read_only_fields = ["reminder_no", "sent_at", "room"]
 
     def get_room_label(self, obj):
         return f"{obj.bill.room.building.name}-{obj.bill.room.room_no}"
@@ -133,6 +135,8 @@ class ReminderSerializer(serializers.ModelSerializer):
 
 class RoomReminderTimelineSerializer(serializers.ModelSerializer):
     bill_no = serializers.CharField(source="bill.bill_no", read_only=True)
+    bill_status = serializers.CharField(source="bill.status", read_only=True)
+    bill_status_display = serializers.CharField(source="bill.get_status_display", read_only=True)
     fee_name = serializers.CharField(source="bill.fee_type.name", read_only=True)
     period = serializers.CharField(source="bill.period", read_only=True)
     amount = serializers.DecimalField(source="bill.amount", max_digits=10, decimal_places=2, read_only=True)
@@ -144,6 +148,8 @@ class RoomReminderTimelineSerializer(serializers.ModelSerializer):
             "id",
             "reminder_no",
             "bill_no",
+            "bill_status",
+            "bill_status_display",
             "fee_name",
             "period",
             "amount",

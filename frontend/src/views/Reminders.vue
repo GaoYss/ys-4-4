@@ -44,7 +44,7 @@
         </template>
         <template #cell-next_follow_up="{ row }">{{ row.next_follow_up || '-' }}</template>
         <template #actions="{ row }">
-          <button v-if="!row.contact_result" @click="openContactForm(row)">记录</button>
+          <button @click="openContactForm(row)">{{ row.contact_result ? '修改' : '记录' }}</button>
           <button @click="openTimelineByRoom(row)">时间线</button>
         </template>
       </DataTable>
@@ -52,7 +52,7 @@
 
     <div v-if="showContactModal" class="modal-overlay" @click.self="showContactModal = false">
       <div class="modal">
-        <h3>记录联系结果</h3>
+        <h3>{{ isEditingContact ? '修改' : '记录' }}联系结果</h3>
         <div class="form-grid">
           <label>联系结果
             <select v-model="contactForm.contact_result">
@@ -81,21 +81,33 @@
           <h3>{{ timelineOwner }} - 催缴时间线</h3>
           <button @click="showTimelineModal = false">关闭</button>
         </div>
+        <div class="bill-status-legend">
+          <span class="legend-item"><span class="legend-dot unpaid"></span>未缴/逾期</span>
+          <span class="legend-item"><span class="legend-dot paid"></span>已缴费</span>
+        </div>
         <div v-if="timelineData.length" class="timeline">
-          <div v-for="item in timelineData" :key="item.id" class="timeline-item">
-            <div class="timeline-dot"></div>
-            <div class="timeline-body">
+          <div v-for="item in timelineData" :key="item.id" class="timeline-item" :class="item.bill_status">
+            <div class="timeline-dot" :class="item.bill_status"></div>
+            <div class="timeline-body" :class="item.bill_status">
               <div class="timeline-header">
                 <strong>{{ item.sent_at }}</strong>
                 <span class="channel-tag">{{ channelLabels[item.channel] || item.channel }}</span>
+                <StatusBadge v-if="item.bill_status === 'paid'" :status="item.bill_status" />
+                <StatusBadge v-else :status="item.bill_status" />
               </div>
               <p>{{ item.message }}</p>
               <div class="timeline-meta">
                 <span v-if="item.contact_result" class="contact-tag" :class="item.contact_result">{{ item.contact_result_display }}</span>
+                <span v-else class="contact-tag none">未记录联系结果</span>
                 <span v-if="item.next_follow_up" class="follow-up-tag">跟进: {{ item.next_follow_up }}</span>
               </div>
               <div class="timeline-bill">
                 {{ item.bill_no }} | {{ item.fee_name }} | {{ item.period }} | ¥{{ Number(item.amount).toFixed(2) }}
+              </div>
+              <div class="timeline-actions">
+                <button @click="openEditContactFromTimeline(item)">
+                  {{ item.contact_result ? '修改联系结果' : '记录联系结果' }}
+                </button>
               </div>
             </div>
           </div>
@@ -122,8 +134,14 @@ const showTimelineModal = ref(false);
 const contactForm = reactive({ id: null, contact_result: "", next_follow_up: "" });
 const timelineData = ref([]);
 const timelineOwner = ref("");
+const currentTimelineRoomId = ref(null);
 
 const channelLabels = { sms: "短信", phone: "电话", wechat: "微信", notice: "纸质通知" };
+
+const isEditingContact = computed(() => {
+  const reminder = reminders.value.find(r => r.id === contactForm.id);
+  return reminder && reminder.contact_result;
+});
 
 const roomMap = computed(() => {
   const map = {};
@@ -206,8 +224,20 @@ async function createReminders() {
 
 function openContactForm(row) {
   contactForm.id = row.id;
-  contactForm.contact_result = "";
-  contactForm.next_follow_up = "";
+  contactForm.contact_result = row.contact_result || "";
+  contactForm.next_follow_up = row.next_follow_up
+    ? row.next_follow_up.substring(0, 16)
+    : "";
+  showContactModal.value = true;
+}
+
+function openEditContactFromTimeline(item) {
+  contactForm.id = item.id;
+  contactForm.contact_result = item.contact_result || "";
+  contactForm.next_follow_up = item.next_follow_up
+    ? item.next_follow_up.substring(0, 16)
+    : "";
+  showTimelineModal.value = false;
   showContactModal.value = true;
 }
 
@@ -220,10 +250,15 @@ async function submitContact() {
   await propertyApi.recordContact(contactForm.id, payload);
   showContactModal.value = false;
   await load();
+  if (timelineOwner.value && currentTimelineRoomId) {
+    timelineData.value = await propertyApi.roomReminderTimeline(currentTimelineRoomId);
+    showTimelineModal.value = true;
+  }
 }
 
 async function openTimeline(billRow) {
   const roomId = billRow.room;
+  currentTimelineRoomId.value = roomId;
   const room = roomMap.value[roomId];
   timelineOwner.value = room ? `${room.building_name}-${room.room_no} ${room.owner_name}` : "";
   timelineData.value = await propertyApi.roomReminderTimeline(roomId);
@@ -233,6 +268,7 @@ async function openTimeline(billRow) {
 async function openTimelineByRoom(reminderRow) {
   const roomId = reminderRow.room || findRoomIdByBill(reminderRow.bill);
   if (!roomId) return;
+  currentTimelineRoomId.value = roomId;
   const room = roomMap.value[roomId];
   timelineOwner.value = room ? `${room.building_name}-${room.room_no} ${room.owner_name}` : "";
   timelineData.value = await propertyApi.roomReminderTimeline(roomId);

@@ -37,15 +37,22 @@
       <div class="panel-head section-gap">
         <h2>房屋档案</h2>
       </div>
-      <DataTable :columns="roomColumns" :rows="rooms" />
+      <DataTable :columns="roomColumns" :rows="rooms">
+        <template #actions="{ row }">
+          <button @click="goToDetail(row)">详情</button>
+        </template>
+      </DataTable>
     </section>
   </div>
 </template>
 
 <script setup>
 import { onMounted, reactive, ref } from "vue";
+import { useRouter } from "vue-router";
 import { propertyApi } from "../api/property";
 import DataTable from "../components/DataTable.vue";
+
+const router = useRouter();
 
 const buildings = ref([]);
 const rooms = ref([]);
@@ -81,6 +88,10 @@ async function saveRoom() {
   await propertyApi.createRoom({ ...roomForm });
   Object.assign(roomForm, { building: "", room_no: "", owner_name: "", phone: "", area: 0 });
   await load();
+}
+
+function goToDetail(row) {
+  router.push(`/owners/${row.id}`);
 }
 
 onMounted(load);
