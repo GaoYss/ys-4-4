@@ -672,3 +672,17 @@ th {
     grid-template-columns: 1fr 1fr;
   }
 }
+
+.btn-secondary {
+  background: #9aa8b3;
+  color: #fff;
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 6px;
+  border: 0;
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background: #7f8c96;
+}

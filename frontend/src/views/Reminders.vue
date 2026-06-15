@@ -19,7 +19,7 @@
         <template #cell-latest_contact="{ row }">{{ getLatestContact(row) }}</template>
         <template #cell-next_follow="{ row }">{{ getNextFollow(row) }}</template>
         <template #actions="{ row }">
-          <button @click="openTimeline(row)">详情</button>
+          <button @click="goToOwner(row.room)">详情</button>
         </template>
       </DataTable>
     </section>
@@ -45,7 +45,7 @@
         <template #cell-next_follow_up="{ row }">{{ row.next_follow_up || '-' }}</template>
         <template #actions="{ row }">
           <button @click="openContactForm(row)">{{ row.contact_result ? '修改' : '记录' }}</button>
-          <button @click="openTimelineByRoom(row)">时间线</button>
+          <button @click="goToOwner(row.room)">业主详情</button>
         </template>
       </DataTable>
     </section>
@@ -65,7 +65,10 @@
             </select>
           </label>
           <label>下次跟进时间
-            <input v-model="contactForm.next_follow_up" type="datetime-local" />
+            <div style="display:flex; gap:6px;">
+              <input v-model="contactForm.next_follow_up" type="datetime-local" style="flex:1;" />
+              <button type="button" v-if="contactForm.next_follow_up" class="btn-secondary" @click="contactForm.next_follow_up = ''">清空</button>
+            </div>
           </label>
         </div>
         <div class="modal-actions">
@@ -74,55 +77,17 @@
         </div>
       </div>
     </div>
-
-    <div v-if="showTimelineModal" class="modal-overlay" @click.self="showTimelineModal = false">
-      <div class="modal modal-wide">
-        <div class="panel-head">
-          <h3>{{ timelineOwner }} - 催缴时间线</h3>
-          <button @click="showTimelineModal = false">关闭</button>
-        </div>
-        <div class="bill-status-legend">
-          <span class="legend-item"><span class="legend-dot unpaid"></span>未缴/逾期</span>
-          <span class="legend-item"><span class="legend-dot paid"></span>已缴费</span>
-        </div>
-        <div v-if="timelineData.length" class="timeline">
-          <div v-for="item in timelineData" :key="item.id" class="timeline-item" :class="item.bill_status">
-            <div class="timeline-dot" :class="item.bill_status"></div>
-            <div class="timeline-body" :class="item.bill_status">
-              <div class="timeline-header">
-                <strong>{{ item.sent_at }}</strong>
-                <span class="channel-tag">{{ channelLabels[item.channel] || item.channel }}</span>
-                <StatusBadge v-if="item.bill_status === 'paid'" :status="item.bill_status" />
-                <StatusBadge v-else :status="item.bill_status" />
-              </div>
-              <p>{{ item.message }}</p>
-              <div class="timeline-meta">
-                <span v-if="item.contact_result" class="contact-tag" :class="item.contact_result">{{ item.contact_result_display }}</span>
-                <span v-else class="contact-tag none">未记录联系结果</span>
-                <span v-if="item.next_follow_up" class="follow-up-tag">跟进: {{ item.next_follow_up }}</span>
-              </div>
-              <div class="timeline-bill">
-                {{ item.bill_no }} | {{ item.fee_name }} | {{ item.period }} | ¥{{ Number(item.amount).toFixed(2) }}
-              </div>
-              <div class="timeline-actions">
-                <button @click="openEditContactFromTimeline(item)">
-                  {{ item.contact_result ? '修改联系结果' : '记录联系结果' }}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div v-else class="placeholder">暂无催缴记录</div>
-      </div>
-    </div>
   </div>
 </template>
 
 <script setup>
 import { computed, onMounted, reactive, ref } from "vue";
+import { useRouter } from "vue-router";
 import { propertyApi } from "../api/property";
 import DataTable from "../components/DataTable.vue";
 import StatusBadge from "../components/StatusBadge.vue";
+
+const router = useRouter();
 
 const bills = ref([]);
 const reminders = ref([]);
@@ -130,11 +95,7 @@ const rooms = ref([]);
 const channel = ref("sms");
 const reminderFilter = ref("unpaid_only");
 const showContactModal = ref(false);
-const showTimelineModal = ref(false);
 const contactForm = reactive({ id: null, contact_result: "", next_follow_up: "" });
-const timelineData = ref([]);
-const timelineOwner = ref("");
-const currentTimelineRoomId = ref(null);
 
 const channelLabels = { sms: "短信", phone: "电话", wechat: "微信", notice: "纸质通知" };
 
@@ -206,6 +167,10 @@ const reminderColumns = [
   { key: "status", label: "状态" }
 ];
 
+function goToOwner(roomId) {
+  router.push(`/owners/${roomId}`);
+}
+
 async function load() {
   const [b, r, rm] = await Promise.all([
     propertyApi.listBills(),
@@ -231,53 +196,17 @@ function openContactForm(row) {
   showContactModal.value = true;
 }
 
-function openEditContactFromTimeline(item) {
-  contactForm.id = item.id;
-  contactForm.contact_result = item.contact_result || "";
-  contactForm.next_follow_up = item.next_follow_up
-    ? item.next_follow_up.substring(0, 16)
-    : "";
-  showTimelineModal.value = false;
-  showContactModal.value = true;
-}
-
 async function submitContact() {
   if (!contactForm.contact_result) return;
   const payload = { contact_result: contactForm.contact_result };
   if (contactForm.next_follow_up) {
     payload.next_follow_up = contactForm.next_follow_up;
+  } else {
+    payload.clear_next_follow_up = true;
   }
   await propertyApi.recordContact(contactForm.id, payload);
   showContactModal.value = false;
   await load();
-  if (timelineOwner.value && currentTimelineRoomId) {
-    timelineData.value = await propertyApi.roomReminderTimeline(currentTimelineRoomId);
-    showTimelineModal.value = true;
-  }
-}
-
-async function openTimeline(billRow) {
-  const roomId = billRow.room;
-  currentTimelineRoomId.value = roomId;
-  const room = roomMap.value[roomId];
-  timelineOwner.value = room ? `${room.building_name}-${room.room_no} ${room.owner_name}` : "";
-  timelineData.value = await propertyApi.roomReminderTimeline(roomId);
-  showTimelineModal.value = true;
-}
-
-async function openTimelineByRoom(reminderRow) {
-  const roomId = reminderRow.room || findRoomIdByBill(reminderRow.bill);
-  if (!roomId) return;
-  currentTimelineRoomId.value = roomId;
-  const room = roomMap.value[roomId];
-  timelineOwner.value = room ? `${room.building_name}-${room.room_no} ${room.owner_name}` : "";
-  timelineData.value = await propertyApi.roomReminderTimeline(roomId);
-  showTimelineModal.value = true;
-}
-
-function findRoomIdByBill(billId) {
-  const bill = bills.value.find((b) => b.id === billId);
-  return bill ? bill.room : null;
 }
 
 onMounted(load);

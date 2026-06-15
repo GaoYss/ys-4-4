@@ -137,10 +137,13 @@ class ReminderViewSet(viewsets.ModelViewSet):
         reminder = self.get_object()
         contact_result = request.data.get("contact_result")
         next_follow_up = request.data.get("next_follow_up")
+        clear_next = request.data.get("clear_next_follow_up")
         if contact_result:
             reminder.contact_result = contact_result
         if next_follow_up:
             reminder.next_follow_up = next_follow_up
+        elif clear_next in (True, "true", "1", 1):
+            reminder.next_follow_up = None
         reminder.save(update_fields=["contact_result", "next_follow_up"])
         return Response(ReminderSerializer(reminder).data)
 

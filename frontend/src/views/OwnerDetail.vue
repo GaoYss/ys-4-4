@@ -109,7 +109,10 @@
             </select>
           </label>
           <label>下次跟进时间
-            <input v-model="contactForm.next_follow_up" type="datetime-local" />
+            <div style="display:flex; gap:6px;">
+              <input v-model="contactForm.next_follow_up" type="datetime-local" style="flex:1;" />
+              <button type="button" v-if="contactForm.next_follow_up" class="btn-secondary" @click="contactForm.next_follow_up = ''">清空</button>
+            </div>
           </label>
         </div>
         <div class="modal-actions">
@@ -192,10 +195,13 @@ async function submitContact() {
   const payload = { contact_result: contactForm.contact_result };
   if (contactForm.next_follow_up) {
     payload.next_follow_up = contactForm.next_follow_up;
+  } else {
+    payload.clear_next_follow_up = true;
   }
   await propertyApi.recordContact(contactForm.id, payload);
   showContactModal.value = false;
   await loadTimeline();
+  await loadBills();
 }
 
 async function payBill(row) {
