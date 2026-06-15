@@ -55,7 +55,7 @@ class FeeTypeViewSet(viewsets.ModelViewSet):
 
 
 class BillViewSet(viewsets.ModelViewSet):
-    queryset = Bill.objects.select_related("room", "room__building", "fee_type").all()
+    queryset = Bill.objects.select_related("room", "room__building", "fee_type").prefetch_related("reminders").all()
     serializer_class = BillSerializer
 
     def get_queryset(self):

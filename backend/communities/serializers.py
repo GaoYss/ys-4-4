@@ -38,6 +38,9 @@ class BillSerializer(serializers.ModelSerializer):
     phone = serializers.CharField(source="room.phone", read_only=True)
     fee_name = serializers.CharField(source="fee_type.name", read_only=True)
     is_overdue = serializers.BooleanField(read_only=True)
+    latest_contact_result = serializers.SerializerMethodField()
+    latest_contact_result_display = serializers.SerializerMethodField()
+    latest_next_follow_up = serializers.SerializerMethodField()
 
     class Meta:
         model = Bill
@@ -57,11 +60,32 @@ class BillSerializer(serializers.ModelSerializer):
             "generated_at",
             "paid_at",
             "is_overdue",
+            "latest_contact_result",
+            "latest_contact_result_display",
+            "latest_next_follow_up",
         ]
         read_only_fields = ["bill_no", "amount", "generated_at", "paid_at", "is_overdue"]
 
     def get_room_label(self, obj):
         return f"{obj.room.building.name}-{obj.room.room_no}"
+
+    def get_latest_contact_result(self, obj):
+        for r in reversed(obj.reminders.all()):
+            if r.contact_result:
+                return r.contact_result
+        return None
+
+    def get_latest_contact_result_display(self, obj):
+        for r in reversed(obj.reminders.all()):
+            if r.contact_result:
+                return r.get_contact_result_display()
+        return None
+
+    def get_latest_next_follow_up(self, obj):
+        for r in reversed(obj.reminders.all()):
+            if r.next_follow_up:
+                return r.next_follow_up.isoformat()
+        return None
 
 
 class PaymentSerializer(serializers.ModelSerializer):

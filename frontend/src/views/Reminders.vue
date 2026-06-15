@@ -16,8 +16,11 @@
       <DataTable :columns="debtBillColumns" :rows="debtBills">
         <template #cell-status="{ row }"><StatusBadge :status="row.status" /></template>
         <template #cell-amount="{ row }">¥{{ Number(row.amount).toFixed(2) }}</template>
-        <template #cell-latest_contact="{ row }">{{ getLatestContact(row) }}</template>
-        <template #cell-next_follow="{ row }">{{ getNextFollow(row) }}</template>
+        <template #cell-latest_contact="{ row }">
+          <span v-if="row.latest_contact_result" class="contact-tag" :class="row.latest_contact_result">{{ row.latest_contact_result_display }}</span>
+          <span v-else class="contact-tag none">未记录</span>
+        </template>
+        <template #cell-next_follow="{ row }">{{ row.latest_next_follow_up || '-' }}</template>
         <template #actions="{ row }">
           <button @click="goToOwner(row.room)">详情</button>
         </template>
@@ -91,7 +94,6 @@ const router = useRouter();
 
 const bills = ref([]);
 const reminders = ref([]);
-const rooms = ref([]);
 const channel = ref("sms");
 const reminderFilter = ref("unpaid_only");
 const showContactModal = ref(false);
@@ -104,14 +106,6 @@ const isEditingContact = computed(() => {
   return reminder && reminder.contact_result;
 });
 
-const roomMap = computed(() => {
-  const map = {};
-  for (const room of rooms.value) {
-    map[room.id] = room;
-  }
-  return map;
-});
-
 const debtBills = computed(() =>
   bills.value.filter((bill) => ["unpaid", "overdue"].includes(bill.status))
 );
@@ -122,28 +116,6 @@ const filteredReminders = computed(() => {
   }
   return reminders.value;
 });
-
-const billReminderMap = computed(() => {
-  const map = {};
-  for (const r of reminders.value) {
-    if (!map[r.bill]) {
-      map[r.bill] = r;
-    }
-  }
-  return map;
-});
-
-function getLatestContact(row) {
-  const r = billReminderMap.value[row.id];
-  if (!r || !r.contact_result) return "-";
-  return r.contact_result_display;
-}
-
-function getNextFollow(row) {
-  const r = billReminderMap.value[row.id];
-  if (!r || !r.next_follow_up) return "-";
-  return r.next_follow_up;
-}
 
 const debtBillColumns = [
   { key: "room_label", label: "房屋" },
@@ -172,14 +144,12 @@ function goToOwner(roomId) {
 }
 
 async function load() {
-  const [b, r, rm] = await Promise.all([
+  const [b, r] = await Promise.all([
     propertyApi.listBills(),
-    propertyApi.listReminders({ unpaid_only: reminderFilter.value === "unpaid_only" ? "true" : "" }),
-    propertyApi.listRooms()
+    propertyApi.listReminders({ unpaid_only: reminderFilter.value === "unpaid_only" ? "true" : "" })
   ]);
   bills.value = b;
   reminders.value = r;
-  rooms.value = rm;
 }
 
 async function createReminders() {

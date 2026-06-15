@@ -48,6 +48,11 @@
           <StatusBadge :status="row.status" />
         </template>
         <template #cell-amount="{ row }">¥{{ Number(row.amount).toFixed(2) }}</template>
+        <template #cell-latest_contact="{ row }">
+          <span v-if="row.latest_contact_result" class="contact-tag" :class="row.latest_contact_result">{{ row.latest_contact_result_display }}</span>
+          <span v-else class="contact-tag none">未记录</span>
+        </template>
+        <template #cell-latest_next_follow_up="{ row }">{{ row.latest_next_follow_up || '-' }}</template>
         <template #actions="{ row }">
           <button v-if="row.status === 'unpaid' || row.status === 'overdue'" @click="payBill(row)">缴费</button>
         </template>
@@ -156,6 +161,8 @@ const billColumns = [
   { key: "amount", label: "金额" },
   { key: "due_date", label: "截止日期" },
   { key: "status", label: "状态" },
+  { key: "latest_contact", label: "最近联系" },
+  { key: "latest_next_follow_up", label: "下次跟进" },
   { key: "paid_at", label: "缴费时间" }
 ];
 
