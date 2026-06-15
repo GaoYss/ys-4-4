@@ -12,6 +12,7 @@ from .serializers import (
     FeeTypeSerializer,
     PaymentSerializer,
     ReminderSerializer,
+    RoomReminderTimelineSerializer,
     RoomSerializer,
 )
 from .services import create_overdue_reminders, dashboard_stats, generate_bills, pay_bill
@@ -37,6 +38,15 @@ class RoomViewSet(viewsets.ModelViewSet):
         if building:
             queryset = queryset.filter(building_id=building)
         return queryset
+
+    @action(detail=True, methods=["get"])
+    def reminder_timeline(self, request, pk=None):
+        room = self.get_object()
+        reminders = Reminder.objects.filter(bill__room=room).select_related(
+            "bill", "bill__fee_type"
+        ).order_by("-sent_at")
+        serializer = RoomReminderTimelineSerializer(reminders, many=True)
+        return Response(serializer.data)
 
 
 class FeeTypeViewSet(viewsets.ModelViewSet):
@@ -104,6 +114,13 @@ class ReminderViewSet(viewsets.ModelViewSet):
     queryset = Reminder.objects.select_related("bill", "bill__room", "bill__room__building", "bill__fee_type").all()
     serializer_class = ReminderSerializer
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        unpaid_only = self.request.query_params.get("unpaid_only")
+        if unpaid_only and unpaid_only.lower() in ("1", "true"):
+            queryset = queryset.filter(bill__status__in=[Bill.UNPAID, Bill.OVERDUE])
+        return queryset
+
     @action(detail=False, methods=["post"])
     def create_overdue(self, request):
         reminders = create_overdue_reminders(request.data.get("channel", Reminder.SMS))
@@ -111,6 +128,18 @@ class ReminderViewSet(viewsets.ModelViewSet):
             {"created_count": len(reminders), "created": ReminderSerializer(reminders, many=True).data},
             status=status.HTTP_201_CREATED,
         )
+
+    @action(detail=True, methods=["patch"])
+    def record_contact(self, request, pk=None):
+        reminder = self.get_object()
+        contact_result = request.data.get("contact_result")
+        next_follow_up = request.data.get("next_follow_up")
+        if contact_result:
+            reminder.contact_result = contact_result
+        if next_follow_up:
+            reminder.next_follow_up = next_follow_up
+        reminder.save(update_fields=["contact_result", "next_follow_up"])
+        return Response(ReminderSerializer(reminder).data)
 
 
 @api_view(["GET"])

@@ -376,3 +376,163 @@ th {
     padding: 0;
   }
 }
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: grid;
+  place-items: center;
+  z-index: 100;
+}
+
+.modal {
+  background: #fff;
+  border-radius: 10px;
+  padding: 24px;
+  width: 440px;
+  max-width: 92vw;
+  max-height: 88vh;
+  overflow-y: auto;
+}
+
+.modal-wide {
+  width: 680px;
+}
+
+.modal h3 {
+  margin: 0 0 16px;
+  font-size: 18px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.modal-actions button[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.timeline {
+  position: relative;
+  padding-left: 24px;
+  margin-top: 12px;
+}
+
+.timeline::before {
+  content: "";
+  position: absolute;
+  left: 8px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #dce3ea;
+}
+
+.timeline-item {
+  position: relative;
+  padding-bottom: 20px;
+}
+
+.timeline-dot {
+  position: absolute;
+  left: -20px;
+  top: 4px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #146c94;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 2px #dce3ea;
+}
+
+.timeline-body {
+  background: #f6f8fa;
+  border-radius: 6px;
+  padding: 12px;
+}
+
+.timeline-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.timeline-body p {
+  margin: 0 0 8px;
+  color: #52606d;
+}
+
+.timeline-meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.timeline-bill {
+  font-size: 12px;
+  color: #8a97a3;
+}
+
+.channel-tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  border-radius: 4px;
+  padding: 1px 8px;
+  background: #e8eef3;
+  color: #52606d;
+  font-size: 12px;
+}
+
+.contact-tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  border-radius: 4px;
+  padding: 1px 8px;
+  font-size: 12px;
+}
+
+.contact-tag.none {
+  background: #e8eef3;
+  color: #8a97a3;
+}
+
+.contact-tag.reached_promise {
+  background: #dff4eb;
+  color: #147050;
+}
+
+.contact-tag.reached_refuse {
+  background: #ffe2e2;
+  color: #b42318;
+}
+
+.contact-tag.unreached {
+  background: #fff3d8;
+  color: #8a5a00;
+}
+
+.contact-tag.empty_number,
+.contact-tag.other {
+  background: #e8eef3;
+  color: #52606d;
+}
+
+.follow-up-tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  border-radius: 4px;
+  padding: 1px 8px;
+  background: #e0f0ff;
+  color: #146c94;
+  font-size: 12px;
+}

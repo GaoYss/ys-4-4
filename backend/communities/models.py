@@ -160,6 +160,18 @@ class Reminder(models.Model):
         (PENDING, "待发送"),
         (SENT, "已发送"),
     )
+    REACHED_PROMISE = "reached_promise"
+    REACHED_REFUSE = "reached_refuse"
+    UNREACHED = "unreached"
+    EMPTY_NUMBER = "empty_number"
+    OTHER = "other"
+    CONTACT_RESULT_CHOICES = (
+        (REACHED_PROMISE, "已接听-承诺缴费"),
+        (REACHED_REFUSE, "已接听-拒绝缴费"),
+        (UNREACHED, "未接听"),
+        (EMPTY_NUMBER, "空号"),
+        (OTHER, "其他"),
+    )
 
     reminder_no = models.CharField("催缴编号", max_length=40, unique=True)
     bill = models.ForeignKey(Bill, related_name="reminders", on_delete=models.CASCADE)
@@ -167,6 +179,8 @@ class Reminder(models.Model):
     message = models.TextField("催缴内容")
     status = models.CharField("状态", max_length=20, choices=STATUS_CHOICES, default=SENT)
     sent_at = models.DateTimeField("发送时间", default=timezone.now)
+    contact_result = models.CharField("联系结果", max_length=20, choices=CONTACT_RESULT_CHOICES, blank=True, default="")
+    next_follow_up = models.DateTimeField("下次跟进时间", null=True, blank=True)
 
     class Meta:
         ordering = ["-sent_at"]

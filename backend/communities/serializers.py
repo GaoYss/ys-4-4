@@ -96,11 +96,13 @@ class PaymentSerializer(serializers.ModelSerializer):
 
 class ReminderSerializer(serializers.ModelSerializer):
     bill_no = serializers.CharField(source="bill.bill_no", read_only=True)
+    bill_status = serializers.CharField(source="bill.status", read_only=True)
     room_label = serializers.SerializerMethodField()
     owner_name = serializers.CharField(source="bill.room.owner_name", read_only=True)
     phone = serializers.CharField(source="bill.room.phone", read_only=True)
     amount = serializers.DecimalField(source="bill.amount", max_digits=10, decimal_places=2, read_only=True)
     due_date = serializers.DateField(source="bill.due_date", read_only=True)
+    contact_result_display = serializers.CharField(source="get_contact_result_display", read_only=True)
 
     class Meta:
         model = Reminder
@@ -109,6 +111,7 @@ class ReminderSerializer(serializers.ModelSerializer):
             "reminder_no",
             "bill",
             "bill_no",
+            "bill_status",
             "room_label",
             "owner_name",
             "phone",
@@ -118,8 +121,37 @@ class ReminderSerializer(serializers.ModelSerializer):
             "message",
             "status",
             "sent_at",
+            "contact_result",
+            "contact_result_display",
+            "next_follow_up",
         ]
         read_only_fields = ["reminder_no", "sent_at"]
 
     def get_room_label(self, obj):
         return f"{obj.bill.room.building.name}-{obj.bill.room.room_no}"
+
+
+class RoomReminderTimelineSerializer(serializers.ModelSerializer):
+    bill_no = serializers.CharField(source="bill.bill_no", read_only=True)
+    fee_name = serializers.CharField(source="bill.fee_type.name", read_only=True)
+    period = serializers.CharField(source="bill.period", read_only=True)
+    amount = serializers.DecimalField(source="bill.amount", max_digits=10, decimal_places=2, read_only=True)
+    contact_result_display = serializers.CharField(source="get_contact_result_display", read_only=True)
+
+    class Meta:
+        model = Reminder
+        fields = [
+            "id",
+            "reminder_no",
+            "bill_no",
+            "fee_name",
+            "period",
+            "amount",
+            "channel",
+            "message",
+            "status",
+            "sent_at",
+            "contact_result",
+            "contact_result_display",
+            "next_follow_up",
+        ]

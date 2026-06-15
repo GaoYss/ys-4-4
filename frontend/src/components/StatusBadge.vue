@@ -11,6 +11,11 @@ const labels = {
   overdue: "已逾期",
   cancelled: "已作废",
   pending: "待发送",
-  sent: "已发送"
+  sent: "已发送",
+  reached_promise: "承诺缴费",
+  reached_refuse: "拒绝缴费",
+  unreached: "未接听",
+  empty_number: "空号",
+  other: "其他"
 };
 </script>
